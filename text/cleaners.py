@@ -133,7 +133,7 @@ def english_punctuation_cleaners(text):
 
 def english_punctuation_emoji_cleaners(text):
   '''Pipeline for English text, including number, abbreviation and punctuation_expansion. and remove emoji'''
-  text = remove_emoji_use_pattern_match(text)
+  text = remove_emoji_use_package(text)
   text = convert_to_ascii(text)
   text = lowercase(text)
   text = expand_numbers(text)

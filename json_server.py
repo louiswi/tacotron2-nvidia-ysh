@@ -28,6 +28,19 @@ from mylogger import logger
 app = Flask(__name__)
 CORS(app)
 
+def np_pad_concate(a,b):
+    max_len = max(a.shape[1], b.shape[1])
+
+    a = np.pad(a[0],(0,max_len-a.shape[1]),'constant', constant_values=(0,0))
+    b = np.pad(b[0],(0,max_len-b.shape[1]),'constant', constant_values=(0,0))
+    a = np.expand_dims(a, 0)
+    b = np.expand_dims(b, 0)
+    c = np.concatenate([a,b], axis=0)
+
+    return c
+
+
+
 def plot_data(data, figsize=(16, 4)):
     fig, axes = plt.subplots(1, len(data), figsize=figsize)
     for i in range(len(data)):
@@ -49,13 +62,14 @@ def synthesize():
     text = request.values.get('text').strip()
     logger.info(f'input text: {text}')
 
-    sequence = np.array(text_to_sequence(text, ['english_punctuation_cleaners']))[None, :]
+    sequence = np.array(text_to_sequence(text, ['english_punctuation_emoji_cleaners']))[None, :]
+    sequence_tmp = np.array(text_to_sequence("hello, welcome to my home.", ['english_punctuation_emoji_cleaners']))[None, :]
+    sequence = np_pad_concate(sequence, sequence_tmp)
     sequence = torch.autograd.Variable(torch.from_numpy(sequence)).cuda().long()
-
     logger.debug(f"preprocess time {time.time() - t1}")
 
     t2 = time.time()
-    mel_outputs, mel_outputs_postnet, _, alignments = model.inference(sequence)
+    (mel_outputs, mel_outputs_postnet, _, alignments), break_marks = model.inference(sequence)
     
     with torch.no_grad():
         audio = waveglow.infer(mel_outputs_postnet, sigma=0.666)

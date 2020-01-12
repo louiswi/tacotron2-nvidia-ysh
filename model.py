@@ -458,6 +458,53 @@ class Decoder(nn.Module):
 
         return mel_outputs, gate_outputs, alignments
 
+    def inference_batch(self, memory):
+        """ Decoder inference
+        PARAMS
+        ------
+        memory: Encoder outputs
+
+        RETURNS
+        -------
+        mel_outputs: mel outputs from the decoder
+        gate_outputs: gate outputs from the decoder
+        alignments: sequence of attention weights from the decoder
+        """
+        # memory_cat = torch.cat((memory, memory), 0)
+        # memory = memory_cat
+        break_marks = [0] * memory.shape[0]
+        decoder_input = self.get_go_frame(memory)
+
+        self.initialize_decoder_states(memory, mask=None)
+
+        mel_outputs, gate_outputs, alignments = [], [], []
+
+        while True:
+            decoder_input = self.prenet(decoder_input)
+            mel_output, gate_output, alignment = self.decode(decoder_input)
+
+            mel_outputs += [mel_output.squeeze(1)]
+            gate_outputs += [gate_output]
+            alignments += [alignment]
+
+            # for idx, _ in enumerate(break_marks):
+            #     # # if all the sentence comes to end, if any sentence not end, should continue
+            #     if torch.sigmoid(gate_output.data[idx]) > self.gate_threshold and break_marks[idx] == 0:
+            #         break_marks[idx] = len(mel_outputs)
+            if torch.max(torch.sigmoid(gate_output.data) - self.gate_threshold) > 0:
+                break
+
+            if len(mel_outputs) == self.max_decoder_steps or min(break_marks) > 0:
+                print("Warning! Reached max decoder steps")
+                break
+
+            decoder_input = mel_output
+
+        mel_outputs, gate_outputs, alignments = self.parse_decoder_outputs(
+            mel_outputs, gate_outputs, alignments)
+
+        return mel_outputs, gate_outputs, alignments, break_marks
+
 
 class Tacotron2(nn.Module):
     def __init__(self, hparams):
@@ -529,13 +576,17 @@ class Tacotron2(nn.Module):
         inputs = self.parse_input(inputs)
         embedded_inputs = self.embedding(inputs).transpose(1, 2)
         encoder_outputs = self.encoder.inference(embedded_inputs)
-        mel_outputs, gate_outputs, alignments = self.decoder.inference(
+        mel_outputs, gate_outputs, alignments, break_marks = self.decoder.inference_batch(
             encoder_outputs)
 
         mel_outputs_postnet = self.postnet(mel_outputs)
         mel_outputs_postnet = mel_outputs + mel_outputs_postnet
 
+        # for idx, _ in enumerate(break_marks):
+        #     if break_marks[idx] > 0:
+        #         mel_outputs_postnet[0][:, break_marks[idx]:] = 0
+
         outputs = self.parse_output(
             [mel_outputs, mel_outputs_postnet, gate_outputs, alignments])
 
-        return outputs
+        return outputs, break_marks
