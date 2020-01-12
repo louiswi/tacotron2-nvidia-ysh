@@ -1,5 +1,5 @@
 matplotlib==2.1.0
-tensorflow==1.12
+tensorflow==1.15.0
 numpy
 inflect==0.2.5
 librosa==0.6.0
