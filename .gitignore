@@ -1,0 +1,7 @@
+model/
+__pycache__/
+.idea/
+result/
+*.mp3
+*.wav
+*.png
