@@ -41,24 +41,40 @@ _abbreviations = [(re.compile('\\b%s\\.' % x[0], re.IGNORECASE), x[1]) for x in 
   ('ft', 'fort'),
 ]]
 
-_punctuation = [(re.compile('\%s' % x[0], re.IGNORECASE), x[1]) for x in [
-  ('%', 'percent'),
-  ('+', 'plus'),
-  ('-', 'minus'),
-  ('/', 'slash'),
-  ('=', 'equals'),
-  ('*', 'times'),
+_compute_marks = [(re.compile('%s' % x[0], re.IGNORECASE), x[1]) for x in [
+  ('(\d)%', '\1 percent'),
+  ('(\d)\s*\+\s*(\d)', '\1 plus \2'),
+  ('(\d)\s*\+\s*(\d)', '\1 minus \2'),
+  ('(\d)\s*/\s*(\d)', '\1 slash \2'),
+  ('(\d)\s*=\s*(\d)', '\1 equals \2'),
+  ('(\d)\s*\*\s*(\d)', '\1 times \2'),
 
 ]]
 
-emoji_pattern = re.compile("["
+_zero_to_nine_re = [(re.compile('%s' % x[0]), x[1]) for x in [
+  ('0', ' zero '),
+  ('1', ' one '),
+  ('2', ' two '),
+  ('3', ' three '),
+  ('4', ' four '),
+  ('5', ' five '),
+  ('6', ' six '),
+  ('7', ' seven '),
+  ('8', ' eight '),
+  ('9', ' nine '),
+]]
+
+_emoji_pattern = re.compile("["
                              u"\U0001F600-\U0001F64F"  # emoticons
-                             u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-                             u"\U0001F680-\U0001F6FF"  # transport & map symbols
-                             u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-                             u"\U00002702-\U000027B0"
+                            u"\U0001F300-\U0001F5FF"  # symbols & pictographs
+                            u"\U0001F680-\U0001F6FF"  # transport & map symbols
+                            u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
+                            u"\U00002702-\U000027B0"
                              u"\U000024C2-\U0001F251"
                              "]+", flags=re.UNICODE)
+
+# numbers more than five digits will replace one by one
+_mobile_number_re = re.compile(r'\d{5,}')
 
 def dealwith_emoji(string, mode="decode"):
   mode_choices = ['decode', 'remove']
@@ -68,15 +84,15 @@ def dealwith_emoji(string, mode="decode"):
   if mode == "decode": # decode with emojis package
     return emojis.decode(string)
   else: # remove with pattern
-    return re.sub(emoji_pattern, r'', string)
+    return re.sub(_emoji_pattern, r'', string)
 
 def expand_abbreviations(text):
   for regex, replacement in _abbreviations:
     text = re.sub(regex, replacement, text)
   return text
 
-def expand_punctuations(text):
-  for regex, replacement in _punctuation:
+def expand_compute_marks(text):
+  for regex, replacement in _compute_marks:
     text = re.sub(regex, replacement, text)
   return text
 
@@ -89,6 +105,16 @@ def add_end_punctuation(text):
 def expand_numbers(text):
   return normalize_numbers(text)
 
+def expand_mobile_numbers(text):
+  while True:
+    item = re.search(_mobile_number_re, text)
+    if item is None:
+      break
+    mobile_text = item.group()
+    for regex, replacement in _zero_to_nine_re:
+      mobile_text = re.sub(regex, replacement, mobile_text)
+    text = text[:item.start()] + " " + mobile_text + " " + text[item.end():]
+  return text
 
 def lowercase(text):
   return text.lower()
@@ -132,7 +158,7 @@ def english_punctuation_cleaners(text):
   text = lowercase(text)
   text = expand_numbers(text)
   text = expand_abbreviations(text)
-  text = expand_punctuations(text)
+  text = expand_compute_marks(text)
   text = collapse_whitespace(text)
   text = add_end_punctuation(text)
   return text
@@ -144,7 +170,20 @@ def english_punctuation_emoji_cleaners(text):
   text = lowercase(text)
   text = expand_numbers(text)
   text = expand_abbreviations(text)
-  text = expand_punctuations(text)
+  text = expand_compute_marks(text)
+  text = collapse_whitespace(text)
+  text = add_end_punctuation(text)
+  return text
+
+def enhanced_english_cleaners(text):
+  '''Pipeline for English text, including number, abbreviation and punctuation_expansion. and dealwith emoji'''
+  text = dealwith_emoji(text)
+  text = convert_to_ascii(text)
+  text = lowercase(text)
+  text = expand_compute_marks(text)
+  text = expand_mobile_numbers(text)
+  text = expand_numbers(text)
+  text = expand_abbreviations(text)
   text = collapse_whitespace(text)
   text = add_end_punctuation(text)
   return text
