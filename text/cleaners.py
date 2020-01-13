@@ -51,8 +51,7 @@ _punctuation = [(re.compile('\%s' % x[0], re.IGNORECASE), x[1]) for x in [
 
 ]]
 
-def remove_emoji_use_pattern_match(string):
-  emoji_pattern = re.compile("["
+emoji_pattern = re.compile("["
                              u"\U0001F600-\U0001F64F"  # emoticons
                              u"\U0001F300-\U0001F5FF"  # symbols & pictographs
                              u"\U0001F680-\U0001F6FF"  # transport & map symbols
@@ -60,12 +59,16 @@ def remove_emoji_use_pattern_match(string):
                              u"\U00002702-\U000027B0"
                              u"\U000024C2-\U0001F251"
                              "]+", flags=re.UNICODE)
-  return emoji_pattern.sub(r'', string)
 
-def remove_emoji_use_package(string):
-  text_with_emoji_plaintext = emojis.decode(string)
-  text_removed_emoji = re.sub('\b:.*:\b', r'', text_with_emoji_plaintext)
-  return text_removed_emoji
+def dealwith_emoji(string, mode="decode"):
+  mode_choices = ['decode', 'remove']
+  if mode not in mode_choices:
+    raise ValueError("Invalid mode type. Expected one of: %s" % mode_choices)
+
+  if mode == "decode": # decode with emojis package
+    return emojis.decode(string)
+  else: # remove with pattern
+    return re.sub(emoji_pattern, r'', string)
 
 def expand_abbreviations(text):
   for regex, replacement in _abbreviations:
@@ -78,6 +81,9 @@ def expand_punctuations(text):
   return text
 
 def add_end_punctuation(text):
+  # if nothing in the text, just add stop mark
+  if text == '':
+    return 'Empty Text. Please Check.'
   return re.sub('([^\.\,\?\:\;])$', r'\1.', text)
 
 def expand_numbers(text):
@@ -89,7 +95,7 @@ def lowercase(text):
 
 
 def collapse_whitespace(text):
-  return re.sub(_whitespace_re, ' ', text)
+  return re.sub(_whitespace_re, ' ', text).strip()
 
 
 def convert_to_ascii(text):
@@ -132,8 +138,8 @@ def english_punctuation_cleaners(text):
   return text
 
 def english_punctuation_emoji_cleaners(text):
-  '''Pipeline for English text, including number, abbreviation and punctuation_expansion. and remove emoji'''
-  text = remove_emoji_use_package(text)
+  '''Pipeline for English text, including number, abbreviation and punctuation_expansion. and dealwith emoji'''
+  text = dealwith_emoji(text)
   text = convert_to_ascii(text)
   text = lowercase(text)
   text = expand_numbers(text)
