@@ -14,7 +14,7 @@ from flask import Flask, request, Response
 from flask_cors import CORS
 from flask import render_template, jsonify, send_file
 
-from audio import load_wav, save_wav
+from audio import load_wav, save_wav, save_mp3_use_ffmpeg
 from hparams import create_hparams
 from model import Tacotron2
 from layers import TacotronSTFT, STFT
@@ -63,21 +63,18 @@ def synthesize():
     logger.info(f'input text: {text}')
 
     sequence = np.array(text_to_sequence(text, ['english_punctuation_emoji_cleaners']))[None, :]
-    sequence_tmp = np.array(text_to_sequence("hello, welcome to my home.", ['english_punctuation_emoji_cleaners']))[None, :]
-    sequence = np_pad_concate(sequence, sequence_tmp)
     sequence = torch.autograd.Variable(torch.from_numpy(sequence)).cuda().long()
     logger.debug(f"preprocess time {time.time() - t1}")
 
     t2 = time.time()
-    (mel_outputs, mel_outputs_postnet, _, alignments), break_marks = model.inference(sequence)
+    (mel_outputs, mel_outputs_postnet, _, alignments) = model.inference(sequence)
     
     with torch.no_grad():
         audio = waveglow.infer(mel_outputs_postnet, sigma=0.666)
     logger.debug(f"inference time {time.time() - t2}")
     
     t3 = time.time()
-    # audio_denoised = denoiser(audio, strength=0.01)[:, 0]
-    audio_denoised = audio
+    audio_denoised = denoiser(audio, strength=0.01)[:, 0]
     logger.debug(f"denoise time {time.time() - t3}")
 
     t4 = time.time()
@@ -89,7 +86,8 @@ def synthesize():
         whole_path_ext = whole_path_wav
     elif ext == 'mp3':
         whole_path_ext = result_path /  f'{wav_name}.mp3'
-        os.system(f"ffmpeg -loglevel panic -y -i {whole_path_wav} -vn -ar {hparams.sampling_rate} -ac 1 -b:a {mp3_bitrate} {whole_path_ext}")
+        # if convert fail, return name fall back to whole_path_wav
+        whole_path_ext = save_mp3_use_ffmpeg(hparams.sampling_rate, mp3_bitrate, whole_path_wav, whole_path_ext)
     else:
         return RuntimeError("unknown file extension")
 
@@ -101,20 +99,26 @@ def synthesize():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', default=8000)
+    parser.add_argument('--hparams', default='',
+                        help='Hyperparameter overrides as a comma-separated list of name=value pairs')
+    parser.add_argument('--ext', default='mp3', choices=["wav", "mp3"],
+                        help='file save extension')
+    parser.add_argument('--mp3_bitrate', default='48k', choices=['24k', '48k', '96k', '192k', '256k'],
+                        help='mp3 bitrate, only useful when saved as mp3')
+    args = parser.parse_args()
 
     current_dir = Path(__file__).resolve().parent
     result_path = current_dir / 'result'
     os.makedirs(result_path, exist_ok=True)
-    ext = ['wav', 'mp3'][1]
 
-    mp3_bitrate = ['24', '48k', '96k', '192k', '256k'][1]
+    ext = args.ext
+    mp3_bitrate = args.mp3_bitrate
+
     hparams = create_hparams()
     hparams.sampling_rate = 22050
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--port', default=8000)
-    parser.add_argument('--hparams', default='', help='Hyperparameter overrides as a comma-separated list of name=value pairs')
-    args = parser.parse_args()
 
     checkpoint_path = "model/tacotron2_statedict.pt"
     model = load_model(hparams)

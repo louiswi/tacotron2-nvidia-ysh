@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow as tf
 from scipy import signal
 from scipy.io import wavfile
+import shlex, subprocess
 
 def load_wav(path, sr):
 	return librosa.core.load(path, sr=sr)[0]
@@ -12,6 +13,15 @@ def save_wav(wav, path, sr):
 	wav *= 32767 / max(0.01, np.max(np.abs(wav)))
 	#proposed by @dsmiller
 	wavfile.write(path, sr, wav.astype(np.int16))
+
+def save_mp3_use_ffmpeg(sampling_rate, mp3_bitrate, wav_path, mp3_path=None):
+	command = f"ffmpeg -loglevel panic -y -i {wav_path} -vn -ar {sampling_rate} -ac 1 -b:a {mp3_bitrate} {mp3_path}"
+	try:
+		subprocess.Popen(shlex.split(command)).wait()
+		return mp3_path
+	except Exception as e:
+		print(f"ERROR: convert to mp3 failed.")
+		return wav_path
 
 
 def save_wavenet_wav(wav, path, sr, inv_preemphasize, k):

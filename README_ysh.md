@@ -26,3 +26,7 @@ Tips:
 1.  remember to add stop sign in the end of sentence, or the model may not know when to stop.
 2.  the generated mp3 file will be stored in the `result` dir.
 3.  the model has a limit of input length, if your sentence is too long and be truncated, try to split them to smaller parts and synthesize each by each.
+
+convert_mp3_patch:
+add `save_mp3_use_ffmpeg` function in audio.py, need ffmpeg installed on the host machine, if failed, will return the input wav_file
+add ext and mp3 bitrate choice in the json_server.py

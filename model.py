@@ -576,17 +576,12 @@ class Tacotron2(nn.Module):
         inputs = self.parse_input(inputs)
         embedded_inputs = self.embedding(inputs).transpose(1, 2)
         encoder_outputs = self.encoder.inference(embedded_inputs)
-        mel_outputs, gate_outputs, alignments, break_marks = self.decoder.inference_batch(
-            encoder_outputs)
+        mel_outputs, gate_outputs, alignments = self.decoder.inference(encoder_outputs)
 
         mel_outputs_postnet = self.postnet(mel_outputs)
         mel_outputs_postnet = mel_outputs + mel_outputs_postnet
 
-        # for idx, _ in enumerate(break_marks):
-        #     if break_marks[idx] > 0:
-        #         mel_outputs_postnet[0][:, break_marks[idx]:] = 0
-
         outputs = self.parse_output(
             [mel_outputs, mel_outputs_postnet, gate_outputs, alignments])
 
-        return outputs, break_marks
+        return outputs
