@@ -20,7 +20,7 @@ from .numbers import normalize_numbers
 _whitespace_re = re.compile(r'\s+')
 
 # List of (regular expression, replacement) pairs for abbreviations:
-_abbreviations = [(re.compile('\\b%s\\.' % x[0], re.IGNORECASE), x[1]) for x in [
+_abbreviations_list = [
   ('mrs', 'misess'),
   ('mr', 'mister'),
   ('dr', 'doctor'),
@@ -39,9 +39,9 @@ _abbreviations = [(re.compile('\\b%s\\.' % x[0], re.IGNORECASE), x[1]) for x in 
   ('ltd', 'limited'),
   ('col', 'colonel'),
   ('ft', 'fort'),
-]]
+]
 
-_compute_marks = [(re.compile(r'%s' % x[0]), r'%s' % x[1]) for x in [
+_compute_marks_list = [
   (r'(\d)%', r'\1 percent'),
   (r'(\d)\s*\+\s*(\d)', r'\1 plus \2'),
   (r'(\d)\s*\+\s*(\d)', r'\1 minus \2'),
@@ -49,10 +49,25 @@ _compute_marks = [(re.compile(r'%s' % x[0]), r'%s' % x[1]) for x in [
   (r'(\d)\s*=\s*(\d)', r'\1 equals \2'),
   (r'(\d)\s*\*\s*(\d)', r'\1 times \2'),
 
-]]
+]
 
-_zero_to_nine_re = [(re.compile('%s' % x[0]), x[1]) for x in [
-  ('0', ' zero '),
+# abbreviation
+
+_abbreviations = [(re.compile(r'\b%s\.' % x[0], re.IGNORECASE), x[1]) for x in _abbreviations_list]
+
+_abbreviations_dict = dict((item[0], item[1]) for item in _abbreviations_list)
+
+_abbreviations_re = re.compile('|'.join([f"\\b{item}\\." for item in _abbreviations_dict.keys()]))
+
+
+# compute marks
+
+_compute_marks = [(re.compile(r'%s' % x[0]), r'%s' % x[1]) for x in _compute_marks_list]
+
+
+# number
+_zero_to_nine_list = \
+  [('0', ' zero '),
   ('1', ' one '),
   ('2', ' two '),
   ('3', ' three '),
@@ -62,8 +77,17 @@ _zero_to_nine_re = [(re.compile('%s' % x[0]), x[1]) for x in [
   ('7', ' seven '),
   ('8', ' eight '),
   ('9', ' nine '),
-]]
+]
 
+_zero_to_nine_dict = dict((k, v) for k, v in _zero_to_nine_list)
+
+_zero_to_nine_re = [(re.compile('%s' % x[0]), x[1]) for x in _zero_to_nine_list]
+
+# numbers more than five digits will replace one by one
+_mobile_number_re = re.compile(r'\d{5,}')
+
+
+# emoji
 _emoji_pattern = re.compile("["
                              u"\U0001F600-\U0001F64F"  # emoticons
                             u"\U0001F300-\U0001F5FF"  # symbols & pictographs
@@ -73,8 +97,6 @@ _emoji_pattern = re.compile("["
                              u"\U000024C2-\U0001F251"
                              "]+", flags=re.UNICODE)
 
-# numbers more than five digits will replace one by one
-_mobile_number_re = re.compile(r'\d{5,}')
 
 def dealwith_emoji(string, mode="decode"):
   mode_choices = ['decode', 'remove']
@@ -86,11 +108,16 @@ def dealwith_emoji(string, mode="decode"):
   else: # remove with pattern
     return re.sub(_emoji_pattern, r'', string)
 
-def expand_abbreviations(text):
+def expand_abbreviations_old(text):
   for regex, replacement in _abbreviations:
     text = re.sub(regex, replacement, text)
   return text
 
+def expand_abbreviations(text):
+  text = re.sub(_abbreviations_re, lambda match: _abbreviations_dict[match.group(0)[:-1]]+" ", text)
+  return text
+
+# can not do as expand abbreviation use one regex to group multi regexs
 def expand_compute_marks(text):
   for regex, replacement in _compute_marks:
     text = re.sub(regex, replacement, text)
@@ -105,7 +132,7 @@ def add_end_punctuation(text):
 def expand_numbers(text):
   return normalize_numbers(text)
 
-def expand_mobile_numbers(text):
+def expand_mobile_numbers_old(text):
   while True:
     item = re.search(_mobile_number_re, text)
     if item is None:
@@ -116,9 +143,11 @@ def expand_mobile_numbers(text):
     text = text[:item.start()] + " " + mobile_text + " " + text[item.end():]
   return text
 
+def expand_mobile_numbers(text):
+  return re.sub(_mobile_number_re, lambda match: ' '.join([_zero_to_nine_dict[item] for item in match.group(0)]), text)
+
 def lowercase(text):
   return text.lower()
-
 
 def collapse_whitespace(text):
   return re.sub(_whitespace_re, ' ', text).strip()
