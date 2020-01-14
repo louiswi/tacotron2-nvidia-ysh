@@ -41,13 +41,13 @@ _abbreviations = [(re.compile('\\b%s\\.' % x[0], re.IGNORECASE), x[1]) for x in 
   ('ft', 'fort'),
 ]]
 
-_compute_marks = [(re.compile('%s' % x[0], re.IGNORECASE), x[1]) for x in [
-  ('(\d)%', '\1 percent'),
-  ('(\d)\s*\+\s*(\d)', '\1 plus \2'),
-  ('(\d)\s*\+\s*(\d)', '\1 minus \2'),
-  ('(\d)\s*/\s*(\d)', '\1 slash \2'),
-  ('(\d)\s*=\s*(\d)', '\1 equals \2'),
-  ('(\d)\s*\*\s*(\d)', '\1 times \2'),
+_compute_marks = [(re.compile(r'%s' % x[0]), r'%s' % x[1]) for x in [
+  (r'(\d)%', r'\1 percent'),
+  (r'(\d)\s*\+\s*(\d)', r'\1 plus \2'),
+  (r'(\d)\s*\+\s*(\d)', r'\1 minus \2'),
+  (r'(\d)\s*/\s*(\d)', r'\1 slash \2'),
+  (r'(\d)\s*=\s*(\d)', r'\1 equals \2'),
+  (r'(\d)\s*\*\s*(\d)', r'\1 times \2'),
 
 ]]
 
