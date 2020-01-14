@@ -62,7 +62,7 @@ def synthesize():
     text = request.values.get('text').strip()
     logger.info(f'input text: {text}')
 
-    sequence = np.array(text_to_sequence(text, ['enhanced_english_cleaners']))[None, :]
+    sequence = np.array(text_to_sequence(text, ['enhanced_english_cleaners'], verbose=True))[None, :]
     sequence = torch.autograd.Variable(torch.from_numpy(sequence)).cuda().long()
     logger.debug(f"preprocess time {time.time() - t1}")
 

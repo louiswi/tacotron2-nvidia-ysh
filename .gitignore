@@ -1,4 +1,5 @@
 model/
+outdir/
 __pycache__/
 .idea/
 result/
