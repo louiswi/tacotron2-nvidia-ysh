@@ -51,6 +51,23 @@ _compute_marks_list = [
 
 ]
 
+_single_word_list = [
+  ('A', 'AI'), ('B', 'BEE'), ('C','CEE'), ('D','DEE'), ('E','EEE'), ('F', 'EF'), ('G', 'GEE'),
+  ('H', 'ECH'), ('I', 'IEE'), ('J','JJE'), ('K', 'KAY'), ('L', 'EL'), ('M', 'EMM'), ('N', 'EN'),
+  ('O', 'O'), ('P', 'PEE'), ('Q', 'Qeu'),
+  ('R', 'AR'), ('S', 'AAS'), ('T', 'TEE'),
+  ('U', 'YOU'), ('V', 'VEE'), ('W', 'DABEYOU'), ('X', 'EKS'), ('Y', 'WI'), ('Z', 'ZEE'),
+  ('.', '')
+]
+
+_single_word_dict = dict((k, v) for k, v in _single_word_list)
+
+_single_word_re = re.compile('|'.join([k for k, v in _single_word_list]))
+
+# big abbreviation
+
+_big_abbreviations_re = re.compile(r'\b[A-Z]*\b|\b(?:[A-Z]\.)+[A-Z]?\b') # first is no dot, second is with dot
+
 # abbreviation
 
 _abbreviations = [(re.compile(r'\b%s\.' % x[0], re.IGNORECASE), x[1]) for x in _abbreviations_list]
@@ -86,7 +103,6 @@ _zero_to_nine_re = [(re.compile('%s' % x[0]), x[1]) for x in _zero_to_nine_list]
 # numbers more than five digits will replace one by one
 _mobile_number_re = re.compile(r'\d{5,}')
 
-
 # emoji
 _emoji_pattern = re.compile("["
                              u"\U0001F600-\U0001F64F"  # emoticons
@@ -107,6 +123,11 @@ def dealwith_emoji(string, mode="decode"):
     return emojis.decode(string)
   else: # remove with pattern
     return re.sub(_emoji_pattern, r'', string)
+
+def expand_big_abbreviations(text):
+  return re.sub(_big_abbreviations_re,
+                lambda match: ' '.join([_single_word_dict[single_word] for single_word in match.group()]),
+                text)
 
 def expand_abbreviations_old(text):
   for regex, replacement in _abbreviations:
@@ -208,6 +229,7 @@ def enhanced_english_cleaners(text):
   '''Pipeline for English text, including number, abbreviation and punctuation_expansion. and dealwith emoji'''
   text = dealwith_emoji(text)
   text = convert_to_ascii(text)
+  text = expand_big_abbreviations(text)
   text = lowercase(text)
   text = expand_compute_marks(text)
   text = expand_mobile_numbers(text)
