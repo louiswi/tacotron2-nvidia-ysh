@@ -118,7 +118,6 @@ _emoji_pattern = re.compile("["
 
 # URl
 
-
 def split_word_to_single_charactor(word):
   word = re.sub(_single_word_ignore_case_re, lambda match: ' ' + _single_word_dict[match.group().upper()] + ' ', word)
   return word
@@ -133,11 +132,17 @@ _url_replace_word_list = [
   ('www', split_word_to_single_charactor('www')),
   (':', ''),
   ('github', 'git hub'),
+  ('gmail', 'gee mail'),
 ]
 
 _url_replace_word_dict = dict((k, v) for k, v in _url_replace_word_list)
 
 _url_replace_word_re = re.compile("|".join([k for k,v in _url_replace_word_list]), flags=re.IGNORECASE)
+
+
+# email
+
+_email_re = re.compile(r'[\.\w]+@\w+?(?:\.\w+)+', flags=re.IGNORECASE)
 
 def dealwith_emoji(string, mode="decode"):
   mode_choices = ['decode', 'remove']
@@ -148,6 +153,13 @@ def dealwith_emoji(string, mode="decode"):
     return emoji.demojize(string)
   else: # remove with pattern
     return re.sub(_emoji_pattern, r'', string)
+
+def expand_email(text):
+  return re.sub(_email_re, lambda match: deal_with_email(match.group()), text)
+
+def deal_with_email(text):
+  text = text.replace('@', ' at ').replace('.', ' dot ')
+  return re.sub(_url_replace_word_re, lambda match: _url_replace_word_dict[match.group().lower()], text)
 
 def expand_url(text):
 
@@ -266,6 +278,7 @@ def enhanced_english_cleaners(text):
   '''Pipeline for English text, including number, abbreviation and punctuation_expansion. and dealwith emoji'''
   text = dealwith_emoji(text)
   text = convert_to_ascii(text)
+  text = expand_email(text)
   text = expand_url(text) # expand url before big_abbreviation, cause url may contains big_abbreviation
   text = expand_big_abbreviations(text)
   text = lowercase(text)
