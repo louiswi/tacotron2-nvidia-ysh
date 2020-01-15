@@ -59,7 +59,8 @@ def demo():
 @app.route('/synthesize', methods=['GET', 'POST'])
 def synthesize():
     t1 = time.time()
-    text = request.values.get('text').strip()
+    # cut the longer syntax, can stop memory grow
+    text = request.values.get('text')[:200].strip()
     logger.info(f'input text: {text}')
 
     sequence = np.array(text_to_sequence(text, ['enhanced_english_cleaners'], verbose=True))[None, :]
@@ -67,7 +68,7 @@ def synthesize():
     logger.debug(f"preprocess time {time.time() - t1}")
 
     t2 = time.time()
-    (mel_outputs, mel_outputs_postnet, _, alignments) = model.inference(sequence)
+    (_, mel_outputs_postnet, _, _) = model.inference(sequence)
     
     with torch.no_grad():
         audio = waveglow.infer(mel_outputs_postnet, sigma=0.666)
@@ -94,6 +95,12 @@ def synthesize():
     logger.debug(f"save time {time.time() - t4}")
     logger.debug(f"total time {time.time() - t1}")
     logger.debug(f'input length {len(text)}, ratio {(time.time()-t1)/len(text)}')
+
+    # delete unused variable can decrease the memory usage
+    del sequence
+    del mel_outputs_postnet
+    del audio_denoised
+    del audio
     return send_file(whole_path_ext, mimetype=f'audio/{ext}')
 
 

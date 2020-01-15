@@ -11,7 +11,7 @@ hyperparameter. Some cleaners are English-specific. You'll typically want to use
   3. "basic_cleaners" if you do not want to transliterate (in this case, you should also update
      the symbols in symbols.py to match your data).
 '''
-import emojis
+import emoji
 import re
 from unidecode import unidecode
 from .numbers import normalize_numbers
@@ -39,6 +39,7 @@ _abbreviations_list = [
   ('ltd', 'limited'),
   ('col', 'colonel'),
   ('ft', 'fort'),
+  ('Sen', 'senate')
 ]
 
 _compute_marks_list = [
@@ -52,17 +53,19 @@ _compute_marks_list = [
 ]
 
 _single_word_list = [
-  ('A', 'AI'), ('B', 'BEE'), ('C','CEE'), ('D','DEE'), ('E','EEE'), ('F', 'EF'), ('G', 'GEE'),
-  ('H', 'ECH'), ('I', 'IEE'), ('J','JJE'), ('K', 'KAY'), ('L', 'EL'), ('M', 'EMM'), ('N', 'EN'),
-  ('O', 'O'), ('P', 'PEE'), ('Q', 'Qeu'),
-  ('R', 'AR'), ('S', 'AAS'), ('T', 'TEE'),
-  ('U', 'YOU'), ('V', 'VEE'), ('W', 'DABEYOU'), ('X', 'EKS'), ('Y', 'WI'), ('Z', 'ZEE'),
+  ('A', 'ai'), ('B', 'bee'), ('C','cee'), ('D','dee'), ('E','eee'), ('F', 'ef'), ('G', 'gee'),
+  ('H', 'ech'), ('I', 'iee'), ('J','jje'), ('K', 'kay'), ('L', 'el'), ('M', 'emm'), ('N', 'en'),
+  ('O', 'o'), ('P', 'pee'), ('Q', 'qeu'),
+  ('R', 'ar'), ('S', 'aas'), ('T', 'tee'),
+  ('U', 'you'), ('V', 'vee'), ('W', 'dabeyou'), ('X', 'eks'), ('Y', 'wi'), ('Z', 'zee'),
   ('.', '')
 ]
 
 _single_word_dict = dict((k, v) for k, v in _single_word_list)
 
 _single_word_re = re.compile('|'.join([k for k, v in _single_word_list]))
+
+_single_word_ignore_case_re = re.compile('|'.join([k for k, v in _single_word_list]), flags=re.IGNORECASE)
 
 # big abbreviation
 
@@ -113,6 +116,28 @@ _emoji_pattern = re.compile("["
                              u"\U000024C2-\U0001F251"
                              "]+", flags=re.UNICODE)
 
+# URl
+
+
+def split_word_to_single_charactor(word):
+  word = re.sub(_single_word_ignore_case_re, lambda match: ' ' + _single_word_dict[match.group().upper()] + ' ', word)
+  return word
+
+_url_re = re.compile(r"\b(https?://(?:[\w]+)(?:\.[\w\-]+)+)(?::\d*)?(?:/[^/ ]*)*\b", flags=re.IGNORECASE)
+
+_url_replace_word_list = [
+  ("/", " slash "),
+  ("https", split_word_to_single_charactor('https')),
+  ("http", split_word_to_single_charactor('http')),
+  ('cn', split_word_to_single_charactor('cn')),
+  ('www', split_word_to_single_charactor('www')),
+  (':', ''),
+  ('github', 'git hub'),
+]
+
+_url_replace_word_dict = dict((k, v) for k, v in _url_replace_word_list)
+
+_url_replace_word_re = re.compile("|".join([k for k,v in _url_replace_word_list]), flags=re.IGNORECASE)
 
 def dealwith_emoji(string, mode="decode"):
   mode_choices = ['decode', 'remove']
@@ -120,9 +145,21 @@ def dealwith_emoji(string, mode="decode"):
     raise ValueError("Invalid mode type. Expected one of: %s" % mode_choices)
 
   if mode == "decode": # decode with emojis package
-    return emojis.decode(string)
+    return emoji.demojize(string)
   else: # remove with pattern
     return re.sub(_emoji_pattern, r'', string)
+
+def expand_url(text):
+
+  return re.sub(_url_re, lambda match: deal_with_main_url(match.group()), text)
+
+def deal_with_main_url(url):
+  prefix = url.split('//')[0]
+  main_name = '//'.join(url.split('//')[1:]).split('/')[0]
+  main_url = prefix + '//' + main_name
+  main_url = re.sub(r'\.', ' dot ', main_url)
+  return re.sub(_url_replace_word_re, lambda match: _url_replace_word_dict[match.group().lower()], main_url)
+
 
 def expand_big_abbreviations(text):
   return re.sub(_big_abbreviations_re,
@@ -229,6 +266,7 @@ def enhanced_english_cleaners(text):
   '''Pipeline for English text, including number, abbreviation and punctuation_expansion. and dealwith emoji'''
   text = dealwith_emoji(text)
   text = convert_to_ascii(text)
+  text = expand_url(text) # expand url before big_abbreviation, cause url may contains big_abbreviation
   text = expand_big_abbreviations(text)
   text = lowercase(text)
   text = expand_compute_marks(text)
