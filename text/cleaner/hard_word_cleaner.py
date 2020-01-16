@@ -16,7 +16,8 @@ _hard_word_list = [
     ("email", 'eee mail'),
     ('ahmed', 'aha med'),
     ('zayed', 'zaah yeed'),
-    ('china', 'chiina')
+    ('china', 'chiina'),
+    ('ipad', 'ii pad')
 ]
 
 _hard_word_dict = dict((k, v) for k, v in _hard_word_list)
