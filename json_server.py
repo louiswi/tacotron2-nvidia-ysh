@@ -65,20 +65,28 @@ def synthesize():
 
     sequence = np.array(text_to_sequence(text, ['enhanced_english_cleaners'], verbose=True))[None, :]
     sequence = torch.autograd.Variable(torch.from_numpy(sequence)).cuda().long()
-    logger.debug(f"preprocess time {time.time() - t1}")
 
+    torch.cuda.synchronize()
     t2 = time.time()
+    logger.debug(f"preprocess time {t2 - t1}")
+
     (_, mel_outputs_postnet, _, _) = model.inference(sequence)
     
     with torch.no_grad():
         audio = waveglow.infer(mel_outputs_postnet, sigma=0.666)
-    logger.debug(f"inference time {time.time() - t2}")
-    
-    t3 = time.time()
-    audio_denoised = denoiser(audio, strength=0.01)[:, 0]
-    logger.debug(f"denoise time {time.time() - t3}")
 
+    torch.cuda.synchronize()
+    t3 = time.time()
+    logger.debug(f"inference time {t3 - t2}")
+
+
+    audio_denoised = denoiser(audio, strength=0.01)[:, 0]
+
+    torch.cuda.synchronize()
     t4 = time.time()
+    logger.debug(f"denoise time {t4 - t3}")
+
+
     wav_name = f'{str(uuid.uuid1())}'
     whole_path_wav = result_path /  f'{wav_name}.wav'
     librosa.output.write_wav(str(whole_path_wav), audio_denoised.cpu().numpy().T, hparams.sampling_rate)
@@ -92,6 +100,7 @@ def synthesize():
     else:
         return RuntimeError("unknown file extension")
 
+    torch.cuda.synchronize()
     logger.debug(f"save time {time.time() - t4}")
     logger.debug(f"total time {time.time() - t1}")
     logger.debug(f'input length {len(text)}, ratio {(time.time()-t1)/len(text)}')
