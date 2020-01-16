@@ -10,15 +10,13 @@ import numpy as np
 import torch
 import time
 
-from flask import Flask, request, Response
+from flask import Flask, request, after_this_request
 from flask_cors import CORS
-from flask import render_template, jsonify, send_file
+from flask import render_template, send_file
 
-from audio import load_wav, save_wav, save_mp3_use_ffmpeg
+from audio import save_mp3_use_ffmpeg
 from hparams import create_hparams
-from model import Tacotron2
-from layers import TacotronSTFT, STFT
-from audio_processing import griffin_lim
+
 from train import load_model
 from text import text_to_sequence
 from denoiser import Denoiser
@@ -38,14 +36,6 @@ def np_pad_concate(a,b):
     c = np.concatenate([a,b], axis=0)
 
     return c
-
-
-
-def plot_data(data, figsize=(16, 4)):
-    fig, axes = plt.subplots(1, len(data), figsize=figsize)
-    for i in range(len(data)):
-        axes[i].imshow(data[i], aspect='auto', origin='bottom', 
-                       interpolation='none')
 
 @app.route('/test')
 def test():
@@ -110,6 +100,22 @@ def synthesize():
     del mel_outputs_postnet
     del audio_denoised
     del audio
+
+    @after_this_request
+    def remove_file(response):
+        try:
+            os.remove(whole_path_wav)
+        except Exception as error:
+            logger.error(f"Error removing file {whole_path_wav}")
+
+        if ext != 'wav':
+            try:
+                os.remove(whole_path_ext)
+            except Exception as error:
+                logger.error(f"Error removing file {whole_path_ext}")
+
+        return response
+
     return send_file(whole_path_ext, mimetype=f'audio/{ext}')
 
 
