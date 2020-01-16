@@ -58,7 +58,7 @@ def english_cleaners(text):
   text = convert_to_ascii(text)
   text = lowercase(text)
   text = expand_numbers(text)
-  text = expand_abbreviations(text)
+  text = expand_dot_abbreviations(text)
   text = collapse_whitespace(text)
   return text
 
@@ -67,13 +67,14 @@ def enhanced_english_cleaners(text):
   text = expand_emoji(text)
   text = convert_to_ascii(text)
   text = expand_email(text)
-  text = expand_url(text) # expand url before big_abbreviation, cause url may contains big_abbreviation
+  text = expand_url(text)
   text = expand_big_abbreviations(text)
   text = lowercase(text)
   text = expand_compute_marks(text)
   text = expand_mobile_numbers(text)
   text = expand_numbers(text)
-  text = expand_abbreviations(text)
+  text = expand_dot_abbreviations(text)
+  text = expand_hard_word(text) # finaly do the hard word, most directly to control
   text = collapse_whitespace(text)
   text = add_end_punctuation(text)
   return text
