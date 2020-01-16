@@ -6,3 +6,5 @@ result/
 *.mp3
 *.wav
 *.png
+*/*.txt
+*.txt

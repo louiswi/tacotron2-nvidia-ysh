@@ -16,8 +16,7 @@ _single_word_re = re.compile('|'.join([k for k, v in _single_word_list]))
 
 _single_word_ignore_case_re = re.compile('|'.join([k for k, v in _single_word_list]), flags=re.IGNORECASE)
 
-
-_big_abbreviations_re = re.compile(r'\b(?:[A-Za-z]\.){1,9}[A-Za-z]?\b|\b[A-Z]{1,5}\b') # first is no dot, second is with dot
+_big_abbreviations_re = re.compile(r'\b(?:[A-Za-z]\.)+[A-Za-z]?\b') # first is no dot, second is with dot
 
 def split_word_to_single_charactor(word):
   word = re.sub(_single_word_ignore_case_re, lambda match: ' ' + _single_word_dict[match.group().upper()] + ' ', word)
@@ -29,8 +28,11 @@ def expand_big_abbreviations(text):
                 text)
 
 if __name__ == "__main__":
-    print(expand_big_abbreviations("I.M come from u.e.a"))
-    print(expand_big_abbreviations("i come from UAE."))
-    print(expand_big_abbreviations("i come from U.A.E."))
-    print(expand_big_abbreviations("I.M come from UA.E."))
+    print(expand_big_abbreviations("i come from u.e.a it is a good place"))
+    print(expand_big_abbreviations("i come from U.A.E it is a good place"))
+    print(expand_big_abbreviations("i come from .u.e.a it is a good place"))
+    print(expand_big_abbreviations("i come from u.e.a. it is a good place"))
+    print(expand_big_abbreviations("i come from .u.e.a. it is a good place"))
+    print(expand_big_abbreviations("i come from su.e.a. it is a good place"))
+    print(expand_big_abbreviations("i come from ..u.e.a. it is a good place"))
 
