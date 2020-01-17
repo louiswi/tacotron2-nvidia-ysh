@@ -6,7 +6,7 @@ from torch.nn import functional as F
 from layers import ConvNorm, LinearNorm
 from utils import to_gpu, get_mask_from_lengths
 from fp16_optimizer import fp32_to_fp16, fp16_to_fp32
-
+from mylogger import logger
 
 class LocationLayer(nn.Module):
     def __init__(self, attention_n_filters, attention_kernel_size,
@@ -309,6 +309,31 @@ class Decoder(nn.Module):
         decoder_inputs = decoder_inputs.transpose(0, 1)
         return decoder_inputs
 
+    # simple, save memory
+    def parse_decoder_outputs_simple(self, mel_outputs):
+        """ Prepares decoder outputs for output
+        PARAMS
+        ------
+        mel_outputs:
+        gate_outputs: gate output energies
+        alignments:
+
+        RETURNS
+        -------
+        mel_outputs:
+        gate_outpust: gate output energies
+        alignments:
+        """
+        # (T_out, B, n_mel_channels) -> (B, T_out, n_mel_channels)
+        mel_outputs = torch.stack(mel_outputs).transpose(0, 1).contiguous()
+        # decouple frames per step
+        mel_outputs = mel_outputs.view(
+            mel_outputs.size(0), -1, self.n_mel_channels)
+        # (B, T_out, n_mel_channels) -> (B, n_mel_channels, T_out)
+        mel_outputs = mel_outputs.transpose(1, 2)
+
+        return mel_outputs
+
     def parse_decoder_outputs(self, mel_outputs, gate_outputs, alignments):
         """ Prepares decoder outputs for output
         PARAMS
@@ -419,6 +444,43 @@ class Decoder(nn.Module):
             mel_outputs, gate_outputs, alignments)
 
         return mel_outputs, gate_outputs, alignments
+
+    # only keep mel_outputs save memory
+    def inference_simple(self, memory):
+        """ Decoder inference
+        PARAMS
+        ------
+        memory: Encoder outputs
+
+        RETURNS
+        -------
+        mel_outputs: mel outputs from the decoder
+        gate_outputs: gate outputs from the decoder
+        alignments: sequence of attention weights from the decoder
+        """
+        decoder_input = self.get_go_frame(memory)
+
+        self.initialize_decoder_states(memory, mask=None)
+
+        mel_outputs  = []
+
+        while True:
+            decoder_input = self.prenet(decoder_input)
+            mel_output, gate_output, _ = self.decode(decoder_input)
+
+            mel_outputs += [mel_output.squeeze(1)]
+
+            if torch.sigmoid(gate_output.data) > self.gate_threshold:
+                break
+            elif len(mel_outputs) == self.max_decoder_steps:
+                print("Warning! Reached max decoder steps")
+                break
+
+            decoder_input = mel_output
+
+        mel_outputs = self.parse_decoder_outputs_simple(mel_outputs)
+
+        return mel_outputs
 
     def inference(self, memory):
         """ Decoder inference
@@ -553,6 +615,11 @@ class Tacotron2(nn.Module):
         outputs = fp16_to_fp32(outputs) if self.fp16_run else outputs
         return outputs
 
+    # simple, save memory
+    def parse_output_simple(self, outputs):
+        outputs = fp16_to_fp32(outputs) if self.fp16_run else outputs
+        return outputs
+
     def forward(self, inputs):
         inputs, input_lengths, targets, max_len, \
             output_lengths = self.parse_input(inputs)
@@ -583,5 +650,19 @@ class Tacotron2(nn.Module):
 
         outputs = self.parse_output(
             [mel_outputs, mel_outputs_postnet, gate_outputs, alignments])
+
+        return outputs
+
+    def inference_simple(self, inputs):
+        inputs = self.parse_input(inputs)
+        embedded_inputs = self.embedding(inputs).transpose(1, 2)
+        encoder_outputs = self.encoder.inference(embedded_inputs)
+        mel_outputs = self.decoder.inference_simple(encoder_outputs)
+
+        mel_outputs_postnet = self.postnet(mel_outputs)
+        mel_outputs_postnet = mel_outputs + mel_outputs_postnet
+
+        outputs = self.parse_output_simple(
+            mel_outputs_postnet)
 
         return outputs

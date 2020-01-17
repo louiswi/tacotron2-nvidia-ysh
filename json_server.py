@@ -60,22 +60,29 @@ def synthesize():
     t2 = time.time()
     logger.debug(f"preprocess time {t2 - t1}")
 
-    (_, mel_outputs_postnet, _, _) = model.inference(sequence)
-    
-    with torch.no_grad():
-        audio = waveglow.infer(mel_outputs_postnet, sigma=0.666)
+    try:
+        with torch.no_grad():
+            mel_outputs_postnet = model.inference_simple(sequence)
+            torch.cuda.empty_cache()
+            audio = waveglow.infer(mel_outputs_postnet, sigma=0.666)
+            torch.cuda.empty_cache()
 
-    torch.cuda.synchronize()
-    t3 = time.time()
-    logger.debug(f"inference time {t3 - t2}")
+            torch.cuda.synchronize()
+            t3 = time.time()
+            logger.debug(f"inference time {t3 - t2}")
 
+            audio_denoised = denoiser(audio, strength=0.01)[:, 0]
 
-    audio_denoised = denoiser(audio, strength=0.01)[:, 0]
+            torch.cuda.synchronize()
+            t4 = time.time()
+            logger.debug(f"denoise time {t4 - t3}")
 
-    torch.cuda.synchronize()
-    t4 = time.time()
-    logger.debug(f"denoise time {t4 - t3}")
+    except RuntimeError as e:
+        if e.args[0].startswith('CUDA out of memory'):
+            logger.fatal('GPU OUT OF MEMORY!')
 
+        torch.cuda.empty_cache()
+        return None
 
     wav_name = f'{str(uuid.uuid1())}'
     whole_path_wav = result_path /  f'{wav_name}.wav'
@@ -95,14 +102,9 @@ def synthesize():
     logger.debug(f"total time {time.time() - t1}")
     logger.debug(f'input length {len(text)}, ratio {(time.time()-t1)/len(text)}')
 
-    # delete unused variable can decrease the memory usage
-    del sequence
-    del mel_outputs_postnet
-    del audio_denoised
-    del audio
-
     @after_this_request
     def remove_file(response):
+        torch.cuda.empty_cache()
         try:
             os.remove(whole_path_wav)
         except Exception as error:

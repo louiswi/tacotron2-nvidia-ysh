@@ -35,7 +35,7 @@ def expand_acronymn(text):
     return_text_list = []
     for word in re.split(rf'[{string.punctuation}\s]', text):
         if word in _acronymn_set:
-            print(f'FIND ACRONYMN: {word}')
+            logger.debug(f'FIND ACRONYMN: {word}')
             return_text_list.append(split_word_to_single_charactor(word))
         else:
             return_text_list.append(word)

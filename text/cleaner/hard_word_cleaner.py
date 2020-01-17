@@ -10,14 +10,16 @@ _hard_word_list = [
     ('github', 'git hub'),
     ('gmail', 'gee mail'),
     ('u', 'you'),
-    ("u're", 'you are'),
     ("ur", 'your'),
     ("thx", 'thanks'),
     ("email", 'eee mail'),
     ('ahmed', 'aha med'),
     ('zayed', 'zaah yeed'),
     ('china', 'chiina'),
-    ('ipad', 'ii pad')
+    ('ipad', 'ii pad'),
+    ('ure', 'you are'),
+    ('youre', 'you are'),
+    ("re", 'are'),
 ]
 
 _hard_word_dict = dict((k, v) for k, v in _hard_word_list)
