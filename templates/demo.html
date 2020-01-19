@@ -14,6 +14,7 @@ button[disabled] {opacity: 0.4; cursor: default}
 <form>
   <input id="text" type="text" size="160" placeholder="Enter Text">
   <button id="button1" name="synthesize">Speak</button>
+  <button id="button2" name="synthesize_split">Speak_split</button>
 </form>
 <p id="message"></p>
 <audio id="audio" controls autoplay hidden></audio>
@@ -34,6 +35,17 @@ q('#button1').addEventListener('click', function(e) {
   e.preventDefault()
   return false
 })
+q('#button2').addEventListener('click', function(e) {
+  text = q('#text').value.trim()
+  if (text) {
+    q('#message').textContent = 'Split and Synthesizing...'
+    q('#button2').disabled = true
+    q('#audio').hidden = true
+    synthesize_split(text)
+  }
+  e.preventDefault()
+  return false
+})
 
 function synthesize(text) {
   fetch('/synthesize?text=' + encodeURIComponent(text), {cache: 'no-cache'})
@@ -48,6 +60,22 @@ function synthesize(text) {
     }).catch(function(err) {
       q('#message').textContent = 'Error: ' + err.message
       q('#button1').disabled = false
+    })
+}
+
+function synthesize_split(text) {
+  fetch('/synthesize_split?text=' + encodeURIComponent(text), {cache: 'no-cache'})
+    .then(function(res) {
+      if (!res.ok) throw Error(res.statusText)
+      return res.blob()
+    }).then(function(blob) {
+      q('#message').textContent = ''
+      q('#button2').disabled = false
+      q('#audio').src = URL.createObjectURL(blob)
+      q('#audio').hidden = false
+    }).catch(function(err) {
+      q('#message').textContent = 'Error: ' + err.message
+      q('#button2').disabled = false
     })
 }
 
