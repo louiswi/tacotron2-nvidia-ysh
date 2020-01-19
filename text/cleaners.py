@@ -83,3 +83,7 @@ def enhanced_english_cleaners(text):
 if __name__ == "__main__":
   print(enhanced_english_cleaners("i'm a good student."))
   print(enhanced_english_cleaners("you're a good student."))
+  print(enhanced_english_cleaners("1 + 1 =2"))
+  print(enhanced_english_cleaners("1 + 1dasd =2"))
+  print(enhanced_english_cleaners("it isn't my Ipad"))
+  print(enhanced_english_cleaners("it's isn't my Ipad"))
