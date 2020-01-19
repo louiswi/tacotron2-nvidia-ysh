@@ -20,7 +20,7 @@ _hard_word_list = [
     ('ure', 'you are'),
     ('youre', 'you are'),
     ("re", 'are'),
-    ("dubai", 'du bii'),
+    ("dubai", 'du buy'),
 ]
 
 _hard_word_dict = dict((k, v) for k, v in _hard_word_list)

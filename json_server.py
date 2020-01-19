@@ -126,7 +126,7 @@ def synthesize_split():
     def split(long_text):
         return re.findall(r'.{1,100}(?:\s+|$)', long_text)
 
-    t1 = time.time()
+    t0 = time.time()
     # cut the longer syntax, can stop memory grow
     long_text = request.values.get('text').strip()
     logger.info(f'input text: {long_text}')
@@ -136,6 +136,7 @@ def synthesize_split():
     audio_denoised_list = []
 
     for text in text_list:
+        t1 = time.time()
         sequence = np.array(text_to_sequence(text, ['enhanced_english_cleaners'], verbose=True))[None, :]
         sequence = torch.autograd.Variable(torch.from_numpy(sequence)).cuda().long()
 
@@ -183,10 +184,9 @@ def synthesize_split():
     else:
         return RuntimeError("unknown file extension")
 
-        torch.cuda.synchronize()
-        logger.debug(f"save time {time.time() - t4}")
-        logger.debug(f"total time {time.time() - t1}")
-        logger.debug(f'input length {len(text)}, ratio {(time.time()-t1)/len(text)}')
+    torch.cuda.synchronize()
+    logger.debug(f"total time {time.time() - t0}")
+    logger.debug(f'input length {len(text)}, ratio {(time.time()-t1)/len(text)}')
 
     @after_this_request
     def remove_file(response):

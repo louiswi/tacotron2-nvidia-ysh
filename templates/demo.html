@@ -12,15 +12,33 @@ button[disabled] {opacity: 0.4; cursor: default}
 </style>
 <body>
 <form>
-  <input id="text" type="text" size="160" placeholder="Enter Text">
-  <button id="button1" name="synthesize">Speak</button>
-  <button id="button2" name="synthesize_split">Speak_split</button>
+<!--  <button id="button1" name="synthesize">Speak</button>-->
+<!--  <button id="button2" name="synthesize_split">Speak_split</button>-->
+<!--  <textarea id="text" type="text" cols="160" placeholder="Enter Text" onkeyup="textAreaAdjust(this)" style="overflow:hidden"></textarea>-->
+
+  <section>
+  <article>
+    <h1>
+      <button id="button1" name="synthesize">Speak</button>
+      <button id="button2" name="synthesize_split">Speak_split</button>
+    </h1>
+    <p>Enter Text Below and Listen!</p>
+    <textarea id="text" type="text" cols="160" placeholder="Enter Text" onkeyup="textAreaAdjust(this)" style="overflow:hidden"></textarea>
+  </article>
+</section>
+
 </form>
 <p id="message"></p>
 <audio id="audio" controls autoplay hidden></audio>
 
 
 <script>
+
+function textAreaAdjust(o) {
+  o.style.height = "1px";
+  o.style.height = (25+o.scrollHeight)+"px";
+  o.style.width = (window.innerWidth - 100)+"px";
+}
 
 function q(selector) {return document.querySelector(selector)}
 q('#text').focus()
