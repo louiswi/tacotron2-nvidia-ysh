@@ -31,15 +31,20 @@ _acronymn_set = set(_acronymn_list)
 _acronymn_re = re.compile('|'.join(_acronymn_set))
 
 
-def expand_acronymn(text):
+def expand_acronymn_old(text):
     return_text_list = []
-    for word in re.split(rf'[{string.punctuation}\s]', text):
+    for word in re.split(rf'([{string.punctuation}\s])', text): # use () to keep seperator
         if word in _acronymn_set:
-            logger.debug(f'FIND ACRONYMN: {word}')
             return_text_list.append(split_word_to_single_charactor(word))
         else:
             return_text_list.append(word)
     return ' '.join(return_text_list)
+
+def expand_acronymn(text):
+    # use () to keep seperator, do not split by ' cause this is usually a word
+    seperate_marks = '!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\s'
+    return ''.join([split_word_to_single_charactor(word) if word in _acronymn_set else word
+                    for word in re.split(rf'([{seperate_marks}])', text)])
 
 def remove_from_set(acronymn_set, text):
     f = open('checked_saved.txt', 'r')
@@ -107,8 +112,9 @@ def optimize_dict():
             save_set(acronymn_set)
             print(f'ori_len {ori_len}, current len {len(acronymn_set)}, removed {ori_len - len(acronymn_set)}')
             break
+
 if __name__ == "__main__":
-    times = 100
+    times = 10000
 
     t2 = time.time()
     for _ in range(times):
@@ -132,3 +138,13 @@ if __name__ == "__main__":
     t4 = time.time()
     print(expand_acronymn("Xi's ability to control dissent far outweighs Putin's, however. Since reaching the top of the Communist Party, Xi has tightened internal discipline, using an anti-corruption campaign to root out bad actors and -- critics say -- go after potential challengers. He also has a colossal propaganda apparatus to rally support around him in times of challenge, and faces no opposition outside of the CCP, nor even the chance that such a figure could arise without a radical transformation in the way China operates".upper()))
     print(time.time() - t4)
+
+    t5 = time.time()
+    for _ in range(times):
+        expand_acronymn("you're my friend".upper())
+    print(time.time() - t5)
+
+    t6 = time.time()
+    for _ in range(times):
+        expand_acronymn_old("you're my friend".upper())
+    print(time.time() - t6)

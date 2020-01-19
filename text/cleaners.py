@@ -14,7 +14,7 @@ hyperparameter. Some cleaners are English-specific. You'll typically want to use
 import emoji
 import re
 from unidecode import unidecode
-from .numbers import normalize_numbers
+from text.numbers import normalize_numbers
 from text.cleaner import *
 
 # Regular expression matching whitespace:
@@ -79,3 +79,7 @@ def enhanced_english_cleaners(text):
   text = collapse_whitespace(text)
   text = add_end_punctuation(text)
   return text
+
+if __name__ == "__main__":
+  print(enhanced_english_cleaners("i'm a good student."))
+  print(enhanced_english_cleaners("you're a good student."))
