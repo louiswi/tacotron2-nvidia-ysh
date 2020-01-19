@@ -19,6 +19,7 @@ from hparams import create_hparams
 
 from train import load_model
 from text import text_to_sequence
+from text.util import split_long_text
 from denoiser import Denoiser
 
 from mylogger import logger
@@ -123,15 +124,12 @@ def synthesize():
 # split and synthesize for the long sentence, only use in experiment
 @app.route('/synthesize_split', methods=['GET', 'POST'])
 def synthesize_split():
-    def split(long_text):
-        return re.findall(r'.{1,100}(?:\s+|$)', long_text)
-
     t0 = time.time()
     # cut the longer syntax, can stop memory grow
     long_text = request.values.get('text').strip()
     logger.info(f'input text: {long_text}')
 
-    text_list = split(long_text)
+    text_list = split_long_text(long_text)
 
     audio_denoised_list = []
 
