@@ -13,7 +13,7 @@ def _load_dict_from_file():
     t1 = time.time()
     acronymn_list = []
     print(os.getcwd())
-    with open(current_dir / '/home/shihangyu/Scripts/tacotron2-nvidia-ysh/text/cleaner/wikipedia-acronyms-simple.json','r') as f:
+    with open(current_dir / 'wikipedia-acronyms-simple.json', 'r') as f:
         while True:
             text = f.readline()
             if text == '':
