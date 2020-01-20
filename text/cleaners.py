@@ -68,14 +68,14 @@ def enhanced_english_cleaners(text):
   text = convert_to_ascii(text)
   text = expand_email(text)
   text = expand_url(text)
-  text = expand_big_abbreviations(text)
-  text = expand_acronymn(text)
+  text = expand_hard_word(text) # finaly do the hard word, most directly to control audio, like 'AI' should be artificial intelligence, not as big abbreviation
+  text = expand_big_abbreviations(text) # important
+  text = expand_acronymn(text) # important
   text = lowercase(text)
   text = expand_compute_marks(text)
   text = expand_mobile_numbers(text)
   text = expand_numbers(text)
   text = expand_dot_abbreviations(text)
-  text = expand_hard_word(text) # finaly do the hard word, most directly to control audio
   text = collapse_whitespace(text)
   text = add_end_punctuation(text)
   return text
