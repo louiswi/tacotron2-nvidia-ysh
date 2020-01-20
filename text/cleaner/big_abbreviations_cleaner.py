@@ -3,7 +3,7 @@ import re
 # big abbreviation
 _single_word_list = [
   ('A', 'ai'), ('B', 'bee'), ('C','cee'), ('D','dee'), ('E','eee'), ('F', 'ef'), ('G', 'gee'),
-  ('H', 'ech'), ('I', 'iee'), ('J','jje'), ('K', 'kay'), ('L', 'el'), ('M', 'emm'), ('N', 'en'),
+  ('H', 'ech'), ('I', 'eye'), ('J','jje'), ('K', 'kay'), ('L', 'el'), ('M', 'emm'), ('N', 'en'),
   ('O', 'oo'), ('P', 'pee'), ('Q', 'qeu'),
   ('R', 'ar'), ('S', 'aas'), ('T', 'tee'),
   ('U', 'you'), ('V', 'vee'), ('W', 'dabeyou'), ('X', 'eks'), ('Y', 'wi'), ('Z', 'zee'),
