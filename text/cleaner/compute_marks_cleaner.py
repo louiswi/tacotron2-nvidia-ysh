@@ -4,7 +4,7 @@ _compute_marks_list = [
   (r'(\d)%', r'\1 percent'),
   (r'(\d)\s*\+\s*(\d)', r'\1 plus \2'),
   (r'(\d)\s*\+\s*(\d)', r'\1 minus \2'),
-  (r'(\d)\s*/\s*(\d)', r'\1 slash \2'),
+  (r'/', r' slash '),
   (r'(\d)\s*=\s*(\d)', r'\1 equals \2'),
   (r'(\d)\s*\*\s*(\d)', r'\1 times \2'),
 ]
