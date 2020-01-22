@@ -24,6 +24,11 @@ _hard_word_list = [
     ("ok", 'okay'),
     ("aka", 'ai kay ai.'),
     ("ai", 'artificial intelligence'),
+    ("pls", "please"),
+    ("restaurant", "resdrungt"),
+    ("beta", "baita"),
+    ("island", "eyeland"),
+    ("tiger", "tiigger"),
 ]
 
 _hard_word_dict = dict((k, v) for k, v in _hard_word_list)
