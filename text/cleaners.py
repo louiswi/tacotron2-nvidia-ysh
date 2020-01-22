@@ -20,12 +20,6 @@ from text.cleaner import *
 # Regular expression matching whitespace:
 _whitespace_re = re.compile(r'\s+')
 
-def add_end_punctuation(text):
-  # if nothing in the text, just add stop mark
-  if text == '':
-    return 'Empty Text. Please Check.'
-  return re.sub('([^\.\,\?\:\;])$', r'\1.', text)
-
 def expand_numbers(text):
   return normalize_numbers(text)
 

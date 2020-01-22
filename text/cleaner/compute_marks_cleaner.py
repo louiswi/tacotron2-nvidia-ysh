@@ -7,7 +7,7 @@ _compute_marks_list = [
   (r'/', r' slash '),
   (r'(\d)\s*=\s*(\d)', r'\1 equals \2'),
   (r'(\d)\s*\*\s*(\d)', r'\1 times \2'),
-  (r'([\W_])[\W_]+', r'\1')
+  # (r'([\W_])[\W_]+', r'\1')
 ]
 
 # compute marks
