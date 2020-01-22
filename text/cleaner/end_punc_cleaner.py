@@ -52,3 +52,4 @@ def handle_all_punctuation(text):
     return text = re.sub(_punc_re,
                 lambda match: _punc_dict[match],
                 text)
+  return text
