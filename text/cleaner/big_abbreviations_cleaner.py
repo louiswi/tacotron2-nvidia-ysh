@@ -7,7 +7,9 @@ _single_word_list = [
   ('O', 'oo'), ('P', 'pee'), ('Q', 'qeu'),
   ('R', 'ar'), ('S', 'aas'), ('T', 'tee'),
   ('U', 'you'), ('V', 'vee'), ('W', 'dabeyou'), ('X', 'eks'), ('Y', 'wi'), ('Z', 'zee'),
-  ('.', '')
+  ('.', ''), 
+  ('0', 'zero'), ('1', 'one'), ('2', 'two'), ('3', 'three'), ('4', 'four'), ('5', 'five'),
+  ('6', 'six'), ('7', 'seven'), ('8', 'eight'), ('9', 'nine')
 ]
 
 _single_word_dict = dict((k, v) for k, v in _single_word_list)
