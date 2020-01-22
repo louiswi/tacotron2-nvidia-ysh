@@ -29,6 +29,7 @@ _hard_word_list = [
     ("beta", "baita"),
     ("island", "eyeland"),
     ("tiger", "tiigger"),
+    ("algorithm", "algorrithem")
 ]
 
 _hard_word_dict = dict((k, v) for k, v in _hard_word_list)
