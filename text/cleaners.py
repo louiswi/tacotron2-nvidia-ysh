@@ -71,8 +71,8 @@ def enhanced_english_cleaners(text):
   text = expand_numbers(text)
   text = expand_dot_abbreviations(text)
   text = collapse_whitespace(text)
-  text = add_end_punctuation(text)
   text = handle_all_punctuation(text)
+  text = add_end_punctuation(text)
   return text
 
 if __name__ == "__main__":

@@ -38,7 +38,7 @@ _punc_list = [
 
 _punc_dict = dict((k, v) for k, v in _punc_list)
 
-_punc_re = re.compile('|'.join([k for k, v in _punc_dict.items()]))
+_punc_re = re.compile('|'.join([f'\{k}' for k, v in _punc_dict.items()]))
 
 def add_end_punctuation(text):
   # if nothing in the text, just add stop mark
@@ -50,6 +50,6 @@ def handle_all_punctuation(text):
   # if all is punctuation
   if not re.match(r'.*[a-zA-Z0-9].*', text):
     return re.sub(_punc_re,
-                lambda match: _punc_dict[match],
+                lambda match: " " + _punc_dict[match.group()],
                 text)
   return text
